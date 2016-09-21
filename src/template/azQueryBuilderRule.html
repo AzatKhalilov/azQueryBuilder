@@ -1,0 +1,25 @@
+<div class="simple-rule">
+    <div>
+        <select ng-options="item.name as item.label for item in queryBuilder.filters" ng-model="rule.name" ng-chage="">
+            <option value="">----</option>
+        </select>
+        <select ng-if="rule.name" ng-options="item as queryBuilder.operators[item].label for item in queryBuilder.filtersByKey[rule.name].operators"
+                ng-model="rule.operator">
+            <option value="">----</option>
+        </select>
+        <span ng-if="rule.name" ng-switch="queryBuilder.filtersByKey[rule.name].type">
+            <span ng-switch-when="boolean">
+                <label>
+                    <input type="radio" ng-model="rule.value" ng-value="true"/>
+                    Yes
+                </label>
+                <label>
+                    <input type="radio" ng-model="rule.value" ng-value="false"/>
+                    No
+                </label>
+            </span>
+            <input ng-switch-default type="text" ng-model="rule.value" />
+        </span>
+        <button ng-click="removeRule()" class="btn-rule-remove">remove</button>
+    </div>
+</div>

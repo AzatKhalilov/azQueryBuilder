@@ -1,0 +1,77 @@
+.query-builder ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.query-builder .group-rule,
+.query-builder .simple-rule {
+    position: relative;
+    margin: 4px 0;
+    border-radius: 4px;
+    padding: 5px;
+    border: 1px solid #EEE;
+    background: #FFFFFF;
+}
+
+.query-builder .group-rule {
+    border: 1px solid #DCC896;
+    background: rgba(250, 240, 210, 0.5);
+}
+
+.query-builder .btn-rule-remove {
+    float: right;
+}
+
+.query-builder .rules-list {
+    padding-left: 15px;
+}
+
+.query-builder .rule-container {
+    position: relative;
+}
+
+.query-builder .rules-list > *::before, .query-builder .rules-list > *::after {
+    content: '';
+    position: absolute;
+    left: -12px;
+    width: 10px;
+    height: calc(50% + 4px);
+    border-color: #CCC;
+    border-style: solid;
+}
+
+.query-builder .rules-list > *::before {
+    top: -4px;
+    border-width: 0 0 2px 2px;
+}
+
+.query-builder .rules-list > *::after {
+    top: 50%;
+    border-width: 0 0 0 2px;
+}
+
+.query-builder .rules-list > *:first-child::before {
+    top: -4px;
+    height: calc(50% + 4px);
+}
+
+.query-builder .rules-list > *:last-child::before {
+    border-radius: 0 0 0 4px;
+}
+
+.query-builder .rules-list > *:last-child::after {
+    display: none;
+}
+
+.query-builder-group-condition {
+    cursor: pointer;
+}
+
+.query-builder .drag-handle {
+    cursor: move;
+}
+
+.group-btn-group {
+
+}

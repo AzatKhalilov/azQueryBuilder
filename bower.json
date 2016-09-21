@@ -1,0 +1,15 @@
+{
+  "name": "azquerybuilder",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Azat Khalilov <billlater@yandex.ru>"
+  ],
+  "license": "MIT",
+  "moduleType": [],
+  "homepage": "",
+  "ignore": [],
+  "dependencies": {
+    "angular": "^1.x.x"
+  }
+}
