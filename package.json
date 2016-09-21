@@ -2,10 +2,14 @@
   "name": "azquerybuilder",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "main": "src/azQueryBuilder.js",
+  "author": "Azat Khalilov <billlater@yandex.ru>",
+  "license": "MIT",
+  "repository" :
+  { "type" : "git",
+    "url" : "https://github.com/AzatKhalilov/azQueryBuilder.git"
   },
-  "author": "",
-  "license": "ISC"
+  "dependencies": {
+    "angular": "^1.x.x"
+  }
 }

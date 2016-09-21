@@ -1,13 +1,13 @@
 {
   "name": "azquerybuilder",
   "description": "",
-  "main": "index.js",
+  "homepage":"https://github.com/AzatKhalilov/azQueryBuilder",
+  "main": "src/azQueryBuilder.js",
   "authors": [
     "Azat Khalilov <billlater@yandex.ru>"
   ],
   "license": "MIT",
   "moduleType": [],
-  "homepage": "",
   "ignore": [],
   "dependencies": {
     "angular": "^1.x.x"
