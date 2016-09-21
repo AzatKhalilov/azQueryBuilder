@@ -125,7 +125,7 @@
             var self = this;
             self.queryBuilder = new azQueryBuilderClass($scope.options);
             $scope.queryBuilder = self.queryBuilder;
-            $scope.rules = self.queryBuilder.rules
+            $scope.rules = self.queryBuilder.rules;
 
             self.addGroup = function (parent) {
                 self.queryBuilder.addGroup(parent)
@@ -252,20 +252,4 @@
             controller: ['$scope', QueryBuilderRuleController]
         }
     }
-
-    // angular.module("azQueryBuilderTemplate",[]).run(['$templateCache',function($templateCache){
-    //     $templateCache.put("src/template/azQueryBuilder.html",[
-    //      '<div>\n'+
-    //      '<ul>\n' +
-    //      '<li ng-repeat="rule in rules">' +
-    //      '<az-query-builder-group ng-if="rule.isGroup"></az-query-builder-group>\n' +
-    //      '' +
-    //      '</li>\n'+
-    //      '</ul>\n'+
-    //      '</div>'
-    //     ].join('')
-    //     )
-    // }])
-
-
 });
