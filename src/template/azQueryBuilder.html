@@ -8,8 +8,8 @@
         </div>
         <ul class="rules-list">
             <li  class="rule-container" ng-repeat="rule in rules track by rule.id">
-                <az-query-builder-group ng-if="rule.isGroup" group="rule"></az-query-builder-group>
-                <az-query-builder-rule ng-if="!rule.isGroup" rule="rule"></az-query-builder-rule>
+                <az-query-builder-group ng-if="rule.isGroup" ng-model="rule"></az-query-builder-group>
+                <az-query-builder-rule ng-if="!rule.isGroup" ng-model="rule"></az-query-builder-rule>
             </li>
         </ul>
     </div>

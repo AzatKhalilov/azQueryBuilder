@@ -5,7 +5,8 @@
 }
 
 .query-builder .group-rule,
-.query-builder .simple-rule {
+.query-builder .simple-rule,
+.query-builder .rule-placeholder{
     position: relative;
     margin: 4px 0;
     border-radius: 4px;
@@ -64,12 +65,19 @@
     display: none;
 }
 
+.rule-placeholder{
+    border-style: dashed;
+}
+
+
+
+
 .query-builder-group-condition {
     cursor: pointer;
 }
 
 .query-builder .drag-handle {
-    cursor: move;
+    /*cursor: move;*/
 }
 
 .group-btn-group {
