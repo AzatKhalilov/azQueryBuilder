@@ -7,7 +7,7 @@
             <button ng-click="addRule()">Add rule</button>
         </div>
         <ul class="rules-list">
-            <li class="rule-container" az-query-rule ng-repeat="rule in rules track by rule.id" ng-model="rule">
+            <li class="rule-container" ng-repeat="rule in rules track by rule.id" ng-model="rule">
                 <az-query-builder-rule ng-model="rule"></az-query-builder-rule>
             </li>
         </ul>

@@ -2,9 +2,9 @@
     if (typeof exports === 'object') {
         // Node, CommonJS-like
         module.exports = factory();
-    } else if  (typeof define === 'function' && define.amd){
+    } else if (typeof define === 'function' && define.amd) {
         // AMD
-        define([],factory);
+        define([], factory);
     } else {
         // Browser globals (root is window)
         root.returnExports = factory();
@@ -46,7 +46,7 @@
         self.condition = self.defaults.defaultCondition;
         self.filters = options.filters || [];
         self.filtersByKey = {};
-        options.filters.forEach(function (item) {
+        self.filters.forEach(function (item) {
             self.filtersByKey[item.name] = item;
         });
         self.operators = options.operators || azQueryBuilderClass.OPERATORS;
@@ -185,18 +185,19 @@
         function QueryBuilderController($scope) {
             var self = this;
             self.queryBuilder = new azQueryBuilderClass($scope.options);
+            $scope.rule = self.queryBuilder;
             $scope.queryBuilder = self.queryBuilder;
+
             $scope.rules = self.queryBuilder.rules;
 
             self.addGroup = function (parent) {
-                self.queryBuilder.addGroup(parent)
+                $scope.rule.addGroup(parent)
             };
             self.addRule = function (parent) {
-                self.queryBuilder.addRule(parent);
+                $scope.rule.addRule(parent);
             };
-
             self.removeRule = function (rule) {
-                self.queryBuilder.removeRule(rule)
+                $scope.rule.removeRule(rule)
             };
 
 
@@ -206,7 +207,10 @@
 
             $scope.addRule = function () {
                 self.addRule($scope)
-            }
+            };
+            $scope.setCondition = function (condition) {
+                $scope.rule.condition = condition;
+            };
 
         }
 
@@ -263,6 +267,9 @@
             $scope.changeCondition = function () {
                 builderController.changeCondition($scope.rule);
             };
+            $scope.setCondition = function (condition) {
+                $scope.rule.condition = condition;
+            };
 
             // builderController.queryBuilder.setDraggable($element[0],$scope.rule);
         }
@@ -279,5 +286,8 @@
             link: QueryBuilderRuleLink,
             controller: ['$scope', QueryBuilderRuleController]
         }
+
     }
+
+    return {}
 });
