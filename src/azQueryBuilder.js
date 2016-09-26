@@ -46,7 +46,7 @@
         self.condition = self.defaults.defaultCondition;
         self.filters = options.filters || [];
         self.filtersByKey = {};
-        options.filters.forEach(function (item) {
+        self.filters.forEach(function (item) {
             self.filtersByKey[item.name] = item;
         });
         self.operators = options.operators || azQueryBuilderClass.OPERATORS;
@@ -279,5 +279,9 @@
             link: QueryBuilderRuleLink,
             controller: ['$scope', QueryBuilderRuleController]
         }
+
+    }
+    return {
+
     }
 });
