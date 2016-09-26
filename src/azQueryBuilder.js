@@ -220,6 +220,7 @@
 
         return {
             restrict: 'E',
+            replace:true,
             templateUrl: getTemplate,
             scope: {
                 templateUrl: '@',
