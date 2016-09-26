@@ -1,12 +1,15 @@
-<div class="simple-rule">
-    <div>
-        <select ng-options="item.name as item.label for item in queryBuilder.filters" ng-model="rule.name" ng-chage="">
-            <option value="">----</option>
-        </select>
-        <select ng-if="rule.name" ng-options="item as queryBuilder.operators[item].label for item in queryBuilder.filtersByKey[rule.name].operators"
-                ng-model="rule.operator">
-            <option value="">----</option>
-        </select>
+<span>
+    <div class="simple-rule" ng-if="!rule.isGroup">
+        <div>
+            <select ng-options="item.name as item.label for item in queryBuilder.filters" ng-model="rule.name"
+                    ng-chage="">
+                <option value="">----</option>
+            </select>
+            <select ng-if="rule.name"
+                    ng-options="item as queryBuilder.operators[item].label for item in queryBuilder.filtersByKey[rule.name].operators"
+                    ng-model="rule.operator">
+                <option value="">----</option>
+            </select>
         <span ng-if="rule.name" ng-switch="queryBuilder.filtersByKey[rule.name].type">
             <span ng-switch-when="boolean">
                 <label>
@@ -18,8 +21,26 @@
                     No
                 </label>
             </span>
-            <input ng-switch-default type="text" ng-model="rule.value" />
+            <input ng-switch-default type="text" ng-model="rule.value"/>
         </span>
-        <button ng-click="removeRule()" class="btn-rule-remove">remove</button>
+            <button ng-click="removeRule()" class="btn-rule-remove">remove</button>
+        </div>
     </div>
-</div>
+
+    <div class="group-rule" ng-if="rule.isGroup">
+        <div class="rules-header">
+            <select ng-options="item as item for item in queryBuilder.defaults.conditions" ng-model="rule.condition">
+            </select>
+        <span class="group-btn-group">
+            <button ng-click="addGroup()">Add group</button>
+            <button ng-click="addRule()">Add rule</button>
+            <button ng-click="removeGroup()">Remove</button>
+        </span>
+        </div>
+        <ul class="rules-list">
+            <li class="rule-container" ng-repeat="rule in rules track by rule.id">
+                <az-query-builder-rule ng-model="rule"></az-query-builder-rule>
+            </li>
+        </ul>
+    </div>
+</span>

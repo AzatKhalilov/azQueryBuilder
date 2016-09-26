@@ -6,10 +6,9 @@
             <button ng-click="addGroup()">Add group</button>
             <button ng-click="addRule()">Add rule</button>
         </div>
-        <ul class="rules-list" az-query-rule-lists>
+        <ul class="rules-list">
             <li class="rule-container" az-query-rule ng-repeat="rule in rules track by rule.id" ng-model="rule">
-                <az-query-builder-group ng-if="rule.isGroup" ng-model="rule"></az-query-builder-group>
-                <az-query-builder-rule ng-if="!rule.isGroup" ng-model="rule"></az-query-builder-rule>
+                <az-query-builder-rule ng-model="rule"></az-query-builder-rule>
             </li>
         </ul>
     </div>
