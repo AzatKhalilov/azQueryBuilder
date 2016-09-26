@@ -1,4 +1,4 @@
-(function (root,factory) {
+(function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD
         define(factory);
@@ -9,11 +9,10 @@
         // Browser globals (root is window)
         root.returnExports = factory();
     }
-})(this,function () {
+})(this, function () {
     angular.module('azQueryBuilderModule', [])
         .factory('azQueryBuilderCore', azQueryBuilderCore)
         .directive('azQueryBuilder', azQueryBuilder)
-        .directive('azQueryBuilderGroup', azQueryBuilderGroup)
         .directive('azQueryBuilderRule', azQueryBuilderRule);
 
     function createUUID() {
@@ -31,7 +30,17 @@
     }
 
     var azQueryBuilderClass = function (options) {
+
+        // function(){}
+
+
         self = this;
+        var dragObject = {
+            data: null,
+            src: null,
+            placeholder: null,
+            display: null
+        };
         self.rules = options.rules || [];
         self.defaults = azQueryBuilderClass.DEFAULTS;
         self.condition = self.defaults.defaultCondition;
@@ -40,7 +49,54 @@
         options.filters.forEach(function (item) {
             self.filtersByKey[item.name] = item;
         });
-        self.operators = options.operators || azQueryBuilderClass.OPERATORS
+        self.operators = options.operators || azQueryBuilderClass.OPERATORS;
+        self.draggable = options.hasOwnProperty('draggable') ? options.draggable : true;
+
+
+        self.setDraggable = function (el, data) {
+            if (!self.draggable) return;
+            el.draggable = true;
+            el.addEventListener(
+                'dragstart',
+                function (e) {
+                    var event = e.originalEvent || e;
+                    event.dataTransfer.effectAllowed = 'move';
+                    dragObject.src = this;
+                    dragObject.data = data;
+                    //for Chrome. Because placeholder invisible if you hide an element immediately
+                    // setTimeout(function(){
+                    //     dragObject.placeholder = el.cloneNode();
+                    //     dragObject.placeholder.innerHTML = '&nbsp';
+                    //     dragObject.placeholder.className ="rule-placeholder";
+                    //     dragObject.placeholder.style.minHeight = el.style.height;
+                    //     dragObject.display = el.style.display;
+                    //     el.insertBefore(dragObject.placeholder,el);
+                    //     // el.style.display ='none';
+                    //     console.log(el.parentNode)
+                    // },0);
+                    event.stopPropagation();
+                    // this.classList.add('drag');
+                    return false;
+                },
+                false
+            );
+            el.addEventListener(
+                'dragend',
+                function (e) {
+                    var event = e.originalEvent || e;
+                    // el.parentNode.removeChild(dragObject.placeholder);
+                    // // el.style.display =dragObject.display;
+                    // dragObject.src = null;
+                    // dragObject.data = null;
+                    // dragObject.placeholder = null;
+
+                    // this.classList.remove('drag');
+                    event.stopPropagation();
+                    return false;
+                },
+                false
+            );
+        }
     };
 
     azQueryBuilderClass.DEFAULTS = {
@@ -97,6 +153,11 @@
     };
 
     azQueryBuilderClass.prototype.changeCondition = function (group) {
+
+    };
+
+
+    azQueryBuilderClass.prototype.setDraggable = function (element, rule) {
 
     };
 
@@ -169,57 +230,6 @@
      *
      *
      */
-    azQueryBuilderGroup.$inject = ['$templateCache'];
-    function azQueryBuilderGroup() {
-        function getTemplate(element, attrs) {
-            var templateUrl = attrs.templateUrl ? attrs.templateUrl : 'src/template/azQueryBuilderGroup.html';
-            return templateUrl;
-        }
-
-        function QueryBuilderGroupController($scope) {
-        }
-
-        function QueryBuilderGroupLink($scope, $element, $attrs, controller) {
-            var builderController = controller;
-            var el = $element[0];
-            el.draggable = true;
-            $scope.queryBuilder = builderController.queryBuilder;
-            $scope.addGroup = function () {
-                builderController.addGroup($scope.group);
-            };
-
-            $scope.addRule = function () {
-                builderController.addRule($scope.group);
-            };
-
-            $scope.removeGroup = function () {
-                builderController.removeRule($scope.group);
-            };
-
-            $scope.changeCondition = function () {
-                builderController.changeCondition($scope.group);
-            }
-        }
-
-        return {
-            restrict: 'E',
-            replace: true,
-            require: '^azQueryBuilder',
-            templateUrl: getTemplate,
-            scope: {
-                templateUrl: '@',
-                group: '='
-            },
-            controller: ['$scope', QueryBuilderGroupController],
-            link: QueryBuilderGroupLink
-        }
-    }
-
-
-    /**
-     *
-     *
-     */
     azQueryBuilderRule.$inject = [];
     function azQueryBuilderRule() {
         function getTemplate(element, attrs) {
@@ -233,20 +243,38 @@
         }
 
         function QueryBuilderRuleLink($scope, $element, $attrs, controller) {
-            var builderController = controller;
+            var builderController = controller[0];
             $scope.queryBuilder = builderController.queryBuilder;
+            $scope.rules = $scope.rule.rules;
+            $scope.addGroup = function () {
+                builderController.addGroup($scope.rule);
+            };
+
+            $scope.addRule = function () {
+                builderController.addRule($scope.rule);
+            };
+
+            $scope.removeGroup = function () {
+                builderController.removeRule($scope.rule);
+            };
             $scope.removeRule = function () {
                 builderController.removeRule($scope.rule);
             };
+            $scope.changeCondition = function () {
+                builderController.changeCondition($scope.rule);
+            };
+
+            // builderController.queryBuilder.setDraggable($element[0],$scope.rule);
         }
 
         return {
             restrict: 'E',
-            require: '^azQueryBuilder',
+            require: ['^azQueryBuilder', 'ngModel'],
+            replace: true,
             templateUrl: getTemplate,
             scope: {
                 templateUrl: '@',
-                rule: '='
+                rule: '=ngModel'
             },
             link: QueryBuilderRuleLink,
             controller: ['$scope', QueryBuilderRuleController]
