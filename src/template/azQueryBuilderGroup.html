@@ -8,7 +8,7 @@
             <button ng-click="removeGroup()">Remove</button>
         </span>
     </div>
-    <ul class="rules-list">
+    <ul class="rules-list" az-query-rule-lists>
         <li class="rule-container" ng-repeat="rule in group.rules track by rule.id">
             <az-query-builder-group ng-if="rule.isGroup" ng-model="rule"></az-query-builder-group>
             <az-query-builder-rule ng-if="!rule.isGroup" ng-model="rule"></az-query-builder-rule>
