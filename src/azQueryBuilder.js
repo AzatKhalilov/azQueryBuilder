@@ -53,6 +53,9 @@
         self.draggable = options.hasOwnProperty('draggable') ? options.draggable : true;
         self.paddingDrop = options.hasOwnProperty('paddingDrop') ? options.paddingDrop : 5;
         self.createImageDrag = options.hasOwnProperty('createImageDrag') ? options.createImageDrag : true;
+        self.onBeforeRemove = options.hasOwnProperty('onBeforeRemove') ? options.onBeforeRemove: function(){
+            return true;
+        }
     };
 
     azQueryBuilderClass.DEFAULTS = {
@@ -153,7 +156,22 @@
                 $scope.rule.addRule(parent);
             };
             self.removeRule = function (rule) {
-                $scope.rule.removeRule(rule)
+                if (angular.isFunction(self.queryBuilder.onBeforeRemove)){
+                    var result = self.queryBuilder.onBeforeRemove(rule)
+                    if (typeof result == 'object' && result.then){
+                        result.then(function(){
+                            self.queryBuilder.removeRule(rule);
+                        })
+                        return;
+                    }
+                    if (typeof result == 'boolean' && result){
+                        self.queryBuilder.removeRule(rule);
+                    }
+                }
+                else {
+                    self.queryBuilder.removeRule(rule);
+                }
+
             };
 
 
