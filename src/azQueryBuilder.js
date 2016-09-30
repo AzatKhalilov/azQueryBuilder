@@ -267,7 +267,8 @@
                 dragInfo.rule = $scope.rule;
                 dragInfo.scope = $scope;
                 event.dataTransfer.effectAllowed = 'move';
-                event.dataTransfer.setData("Text", 'sdsds');
+                event.dataTransfer.setData("Text", '');
+                $element.addClass('dragRule');
                 if (builderController.queryBuilder.createImageDrag){
                     event.dataTransfer.setDragImage($element[0],0,0)
                 }
@@ -281,6 +282,7 @@
                 dragInfo.currentOverClass ='';
                 $element.removeClass('dragTop');
                 $element.removeClass('dragBottom');
+                $element.removeClass('dragRule');
                 event.stopPropagation();
             });
 
