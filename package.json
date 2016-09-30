@@ -1,6 +1,6 @@
 {
   "name": "azquerybuilder",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "src/azQueryBuilder.js",
   "author": "Azat Khalilov <billlater@yandex.ru>",

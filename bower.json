@@ -1,6 +1,6 @@
 {
   "name": "azquerybuilder",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "homepage":"https://github.com/AzatKhalilov/azQueryBuilder",
   "main": "src/azQueryBuilder.js",
