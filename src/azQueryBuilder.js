@@ -51,52 +51,8 @@
         });
         self.operators = options.operators || azQueryBuilderClass.OPERATORS;
         self.draggable = options.hasOwnProperty('draggable') ? options.draggable : true;
-
-
-        self.setDraggable = function (el, data) {
-            if (!self.draggable) return;
-            el.draggable = true;
-            el.addEventListener(
-                'dragstart',
-                function (e) {
-                    var event = e.originalEvent || e;
-                    event.dataTransfer.effectAllowed = 'move';
-                    dragObject.src = this;
-                    dragObject.data = data;
-                    //for Chrome. Because placeholder invisible if you hide an element immediately
-                    // setTimeout(function(){
-                    //     dragObject.placeholder = el.cloneNode();
-                    //     dragObject.placeholder.innerHTML = '&nbsp';
-                    //     dragObject.placeholder.className ="rule-placeholder";
-                    //     dragObject.placeholder.style.minHeight = el.style.height;
-                    //     dragObject.display = el.style.display;
-                    //     el.insertBefore(dragObject.placeholder,el);
-                    //     // el.style.display ='none';
-                    //     console.log(el.parentNode)
-                    // },0);
-                    event.stopPropagation();
-                    // this.classList.add('drag');
-                    return false;
-                },
-                false
-            );
-            el.addEventListener(
-                'dragend',
-                function (e) {
-                    var event = e.originalEvent || e;
-                    // el.parentNode.removeChild(dragObject.placeholder);
-                    // // el.style.display =dragObject.display;
-                    // dragObject.src = null;
-                    // dragObject.data = null;
-                    // dragObject.placeholder = null;
-
-                    // this.classList.remove('drag');
-                    event.stopPropagation();
-                    return false;
-                },
-                false
-            );
-        }
+        self.paddingDrop = options.hasOwnProperty('paddingDrop') ? options.paddingDrop : 5;
+        self.createImageDrag = options.hasOwnProperty('createImageDrag') ? options.createImageDrag : true;
     };
 
     azQueryBuilderClass.DEFAULTS = {
@@ -237,6 +193,12 @@
      */
     azQueryBuilderRule.$inject = [];
     function azQueryBuilderRule() {
+        var dragInfo = {
+            target:null,
+            scope:null,
+            rule:null
+        };
+
         function getTemplate(element, attrs) {
             var template = attrs.templateUrl ? attrs.templateUrl : 'src/template/azQueryBuilderRule.html';
             return template;
@@ -248,6 +210,30 @@
         }
 
         function QueryBuilderRuleLink($scope, $element, $attrs, controller) {
+
+            function topOrBottom(event,targetNode,padding){
+                var mousePointer =  event.offsetY;
+                var targetSize = targetNode[0].clientHeight;
+                var targetPosition = targetNode[0].offsetTop;
+                if (mousePointer<=padding){
+                    $element.addClass('dragTop');
+                    $element.removeClass('dragBottom');
+                    dragInfo.whereDrop = 'previous';
+                }
+                if (mousePointer>=targetSize-padding) {
+                    $element.addClass('dragBottom');
+                    $element.removeClass('dragTop');
+                    dragInfo.whereDrop = 'next'
+                }
+            }
+
+            function dropAllowed(){
+                if (dragInfo.rule == null) {
+                    return false;
+                }
+                return true
+            }
+
             var builderController = controller[0];
             $scope.queryBuilder = builderController.queryBuilder;
             $scope.rules = $scope.rule.rules;
@@ -272,7 +258,83 @@
                 $scope.rule.condition = condition;
             };
 
-            // builderController.queryBuilder.setDraggable($element[0],$scope.rule);
+            $element[0].draggable = builderController.queryBuilder.draggable;
+
+
+            $element.on('dragstart',function(e){
+                var event = e.originalEvent || e;
+                dragInfo.target = event.target;
+                dragInfo.rule = $scope.rule;
+                dragInfo.scope = $scope;
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData("Text", 'sdsds');
+                if (builderController.queryBuilder.createImageDrag){
+                    event.dataTransfer.setDragImage($element[0],0,0)
+                }
+                event.stopPropagation();
+            });
+
+            $element.on('dragend',function(e){
+                var event = e.originalEvent || e;
+                dragInfo.target = null;
+                dragInfo.scope = null;
+                dragInfo.currentOverClass ='';
+                $element.removeClass('dragTop');
+                $element.removeClass('dragBottom');
+                event.stopPropagation();
+            });
+
+            $element.on('dragenter',function(e){
+                var event = e.originalEvent || e;
+                if (!dropAllowed){
+                    return true;
+                }
+                event.preventDefault();
+            });
+
+            $element.on('dragleave',function(e){
+                var event = e.originalEvent || e;
+                $element.removeClass('dragTop');
+                $element.removeClass('dragBottom');
+            });
+
+            $element.on('dragover',function(e){
+                var event = e.originalEvent || e;
+                event.stopPropagation();
+                event.preventDefault();
+                if ($element[0] == dragInfo.target) {
+                    return true;
+                }
+                topOrBottom(event,$element,builderController.queryBuilder.paddingDrop);
+                return false;
+            });
+
+            $element.on('drop',function(e){
+                var event = e.originalEvent || e;
+                if (!dropAllowed() ||$element[0] == dragInfo.target){
+                    return true;
+                }
+                event.stopPropagation();
+                event.preventDefault();
+                dragInfo.currentOverClass = '';
+                dragInfo.rule.parent.rules.some(function(item,index){
+                    if (item!=dragInfo.rule) return false;
+                    dragInfo.rule.parent.rules.splice(index,1);
+                    return true;
+                });
+                for (var i=0;i<$scope.rule.parent.rules.length;i++){
+                    if ($scope.rule.parent.rules[i]!= $scope.rule){
+                        continue;
+                    }
+                    $scope.rule.parent.rules.splice(dragInfo.whereDrop =='previous'?i:i+1,0,dragInfo.rule);
+                    dragInfo.rule.parent = $scope.rule.parent;
+                    break;
+                }
+                $scope.$evalAsync();
+                $element.removeClass('dragTop');
+                $element.removeClass('dragBottom');
+                return false;
+            });
         }
 
         return {
