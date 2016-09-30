@@ -304,7 +304,7 @@
                 var event = e.originalEvent || e;
                 event.stopPropagation();
                 event.preventDefault();
-                if ($element[0] == dragInfo.target) {
+                if ($element[0] === dragInfo.target) {
                     return true;
                 }
                 topOrBottom(event,$element,builderController.queryBuilder.paddingDrop);
@@ -313,7 +313,7 @@
 
             $element.on('drop',function(e){
                 var event = e.originalEvent || e;
-                if (!dropAllowed() ||$element[0] == dragInfo.target){
+                if (!dropAllowed() ||$element[0] === dragInfo.target){
                     return true;
                 }
                 event.stopPropagation();
