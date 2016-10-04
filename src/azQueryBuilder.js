@@ -30,17 +30,7 @@
     }
 
     var azQueryBuilderClass = function (options) {
-
-        // function(){}
-
-
         self = this;
-        var dragObject = {
-            data: null,
-            src: null,
-            placeholder: null,
-            display: null
-        };
         self.rules = options.rules || [];
         self.defaults = azQueryBuilderClass.DEFAULTS;
         self.condition = self.defaults.defaultCondition;
@@ -373,4 +363,18 @@
     }
 
     return {}
+
+    // $templateCache.put('template/azQueryBuilder.html',["<div class=\"query-builder\">",
+    //     "<div class=\"group-rule\">",
+    //     "<div>",
+    //     "<select ng-options=\"item as item for item in queryBuilder.defaults.conditions\"",
+    //     "ng-model=\"queryBuilder.condition\">",
+    //     "</select>",
+    //     "<button ng-click=\"addGroup()\">Add group</button>",
+    //     "<button ng-click=\"addRule()\">Add rule</button>",
+    //     "</div>",
+    //     "<ul class=\"rules-list\">",
+    //     "<li class=\"rule-container\" ng-repeat=\"rule in rules track by rule.id\" ng-model=\"rule\">",
+    //     "<az-query-builder-rule ng-model=\"rule\"></az-query-builder-rule>",
+    //     "</li></ul></div></div>"].join(''));
 });
