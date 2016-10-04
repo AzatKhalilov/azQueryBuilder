@@ -7,7 +7,7 @@
         define([], factory);
     } else {
         // Browser globals (root is window)
-        root.returnExports = factory();
+        root.azQueryBuilder = factory();
     }
 })(this, function () {
     angular.module('azQueryBuilder', [])
@@ -29,17 +29,83 @@
         return s.join("");
     }
 
+    function format(str, arg) {
+        return str.replace(/{(\d+)}/g, function (match, number) {
+            return typeof arg[number] != 'undefined'
+                ? arg[number]
+                : match;
+        });
+    }
+
+    var sqlOperators = {
+        equal: {operator: '=', format: "{0}"},
+        not_equal: {operator: '!=', format: '{0}'},
+        in: {type: 'in', label: 'in'},
+        not_in: {type: 'not_in', label: 'not in'},
+        less: {operator: '<', format: '{0}'},
+        less_or_equal: {operator: '<=', format: '{0}'},
+        greater: {operator: '>', format: '{0}'},
+        greater_or_equal: {operator: '>=', format: '{0}'},
+        between: {type: 'between', label: 'between', countValues: 2},
+        not_between: {type: 'not_between', label: 'not between', countValues: 2},
+        begins_with: {type: 'begins_with', label: 'begin with'},
+        not_begins_with: {type: 'not_begins_with', label: 'not begins with'},
+        contains: {type: 'contains', label: 'contains'},
+        not_contains: {type: 'not_contains', label: 'not contains'},
+        ends_with: {type: 'ends_with', label: 'ends with'},
+        not_ends_with: {type: 'not_ends_with', label: 'not ends with'},
+        is_empty: {type: 'is_empty', label: 'is empty'},
+        is_not_empty: {type: 'is_not_empty', label: 'is not empty'},
+        is_null: {type: 'is_null', label: 'is null'},
+        is_not_null: {type: 'is_not_null', label: 'is not null'}
+    };
+
+    function valid(rule){
+        return rule.name&&rule.operator;
+    }
+    function parseSql(rule) {
+        var condition = '';
+        rule.rules.some(function (item, index) {
+            var childCondition = '';
+            if (item.rules && item.rules.length > 0) {
+                if (item.rules.length==1){
+                    condition +=parseSql(item);
+                }else {
+                    condition += "(" + parseSql(item) + ")";
+                }
+
+            } else {
+                if (!valid(item)){
+                    console.error('Not valid condition');
+                    return true;
+                }
+                condition += item.name + ' ' + sqlOperators[item.operator].operator + ' ' +
+                    format(sqlOperators[item.operator].format, [item.value]);
+            }
+            if (index < rule.rules.length - 1) {
+                condition += ' ' + rule.condition + ' ';
+            }
+        });
+        return condition
+    }
+
     var azQueryBuilderClass = function (options) {
         self = this;
-        self.rules = options.rules || [];
         self.defaults = azQueryBuilderClass.DEFAULTS;
-        self.condition = self.defaults.defaultCondition;
+        self.rule =options.rule || {
+            rules: [],
+            condition: self.defaults.defaultCondition
+        };
         self.filters = options.filters || [];
         self.filtersByKey = {};
         self.filters.forEach(function (item) {
             self.filtersByKey[item.name] = item;
         });
         self.operators = options.operators || azQueryBuilderClass.OPERATORS;
+        self.convertPlugin = {
+            sql: parseSql
+        }
+
     };
 
     azQueryBuilderClass.DEFAULTS = {
@@ -56,8 +122,8 @@
         less_or_equal: {type: 'less_or_equal', label: '<='},
         greater: {type: 'greater', label: '>'},
         greater_or_equal: {type: 'greater_or_equal', label: '>='},
-        between: {type: 'between', label: 'between'},
-        not_between: {type: 'not_between', label: 'not between'},
+        between: {type: 'between', label: 'between', countValues: 2},
+        not_between: {type: 'not_between', label: 'not between', countValues: 2},
         begins_with: {type: 'begins_with', label: 'begin with'},
         not_begins_with: {type: 'not_begins_with', label: 'not begins with'},
         contains: {type: 'contains', label: 'contains'},
@@ -95,14 +161,14 @@
         })
     };
 
-    azQueryBuilderClass.prototype.changeCondition = function (group) {
-
+    azQueryBuilderClass.prototype.getConditionString = function (format) {
+        return this.convertPlugin[format].apply(this,[this.rule]);
     };
 
-
-    azQueryBuilderClass.prototype.setDraggable = function (element, rule) {
-
+    azQueryBuilderClass.prototype.getConditionSQL = function () {
+        return this.getConditionString('sql')
     };
+
 
     /**
      *
@@ -119,8 +185,6 @@
      */
     azQueryBuilder.$inject = [];
     function azQueryBuilder() {
-
-
         function getTemplate(element, attrs) {
             return attrs.templateUrl ? attrs.templateUrl : 'src/template/azQueryBuilder.html';
         }
@@ -128,44 +192,41 @@
         function QueryBuilderController($scope) {
             var self = this;
             self.queryBuilder = new azQueryBuilderClass($scope.options);
-
             self.draggable = $scope.options.hasOwnProperty('draggable') ? $scope.options.draggable : true;
             self.paddingDrop = $scope.options.hasOwnProperty('paddingDrop') ? $scope.options.paddingDrop : 5;
             self.createImageDrag = $scope.options.hasOwnProperty('createImageDrag') ? $scope.options.createImageDrag : true;
-            self.onBeforeRemove = $scope.options.hasOwnProperty('onBeforeRemove') ? $scope.options.onBeforeRemove: function(){
+            self.onBeforeRemove = $scope.options.hasOwnProperty('onBeforeRemove') ? $scope.options.onBeforeRemove : function () {
                 return true;
-            }
+            };
 
-            $scope.rule = self.queryBuilder;
+            $scope.rule = self.queryBuilder.rule;
             $scope.queryBuilder = self.queryBuilder;
 
-            $scope.rules = self.queryBuilder.rules;
+            $scope.rules = self.queryBuilder.rule.rules;
 
             self.addGroup = function (parent) {
-                $scope.rule.addGroup(parent)
+                self.queryBuilder.addGroup(parent);
             };
             self.addRule = function (parent) {
-                $scope.rule.addRule(parent);
+                self.queryBuilder.addRule(parent);
             };
             self.removeRule = function (rule) {
-                if (angular.isFunction(self.onBeforeRemove)){
-                    var result = self.onBeforeRemove(rule)
-                    if (typeof result == 'object' && result.then){
-                        result.then(function(){
+                if (angular.isFunction(self.onBeforeRemove)) {
+                    var result = self.onBeforeRemove(rule);
+                    if (typeof result == 'object' && result.then) {
+                        result.then(function () {
                             self.queryBuilder.removeRule(rule);
-                        })
+                        });
                         return;
                     }
-                    if (typeof result == 'boolean' && result){
+                    if (typeof result == 'boolean' && result) {
                         self.queryBuilder.removeRule(rule);
                     }
                 }
                 else {
                     self.queryBuilder.removeRule(rule);
                 }
-
             };
-
 
             $scope.addGroup = function () {
                 self.addGroup($scope)
@@ -178,6 +239,10 @@
                 $scope.rule.condition = condition;
             };
 
+            $scope.getSql = function(){
+                console.log(self.queryBuilder.getConditionSQL());
+            }
+
         }
 
         function QueryBuilderLink() {
@@ -186,7 +251,7 @@
 
         return {
             restrict: 'E',
-            replace:true,
+            replace: true,
             templateUrl: getTemplate,
             scope: {
                 templateUrl: '@',
@@ -204,9 +269,9 @@
     azQueryBuilderRule.$inject = [];
     function azQueryBuilderRule() {
         var dragInfo = {
-            target:null,
-            scope:null,
-            rule:null
+            target: null,
+            scope: null,
+            rule: null
         };
 
         function getTemplate(element, attrs) {
@@ -221,23 +286,23 @@
 
         function QueryBuilderRuleLink($scope, $element, $attrs, controller) {
 
-            function topOrBottom(event,targetNode,padding){
-                var mousePointer =  event.offsetY;
+            function topOrBottom(event, targetNode, padding) {
+                var mousePointer = event.offsetY;
                 var targetSize = targetNode[0].clientHeight;
                 var targetPosition = targetNode[0].offsetTop;
-                if (mousePointer<=padding){
+                if (mousePointer <= padding) {
                     $element.addClass('dragTop');
                     $element.removeClass('dragBottom');
                     dragInfo.whereDrop = 'previous';
                 }
-                if (mousePointer>=targetSize-padding) {
+                if (mousePointer >= targetSize - padding) {
                     $element.addClass('dragBottom');
                     $element.removeClass('dragTop');
                     dragInfo.whereDrop = 'next'
                 }
             }
 
-            function dropAllowed(){
+            function dropAllowed() {
                 if (dragInfo.rule == null) {
                     return false;
                 }
@@ -271,7 +336,7 @@
             $element[0].draggable = builderController.draggable;
 
 
-            $element.on('dragstart',function(e){
+            $element.on('dragstart', function (e) {
                 var event = e.originalEvent || e;
                 dragInfo.target = event.target;
                 dragInfo.rule = $scope.rule;
@@ -279,66 +344,66 @@
                 event.dataTransfer.effectAllowed = 'move';
                 event.dataTransfer.setData("Text", '');
                 $element.addClass('dragRule');
-                if (builderController.createImageDrag){
-                    event.dataTransfer.setDragImage($element[0],0,0)
+                if (builderController.createImageDrag) {
+                    event.dataTransfer.setDragImage($element[0], 0, 0)
                 }
                 event.stopPropagation();
             });
 
-            $element.on('dragend',function(e){
+            $element.on('dragend', function (e) {
                 var event = e.originalEvent || e;
                 dragInfo.target = null;
                 dragInfo.scope = null;
-                dragInfo.currentOverClass ='';
+                dragInfo.currentOverClass = '';
                 $element.removeClass('dragTop');
                 $element.removeClass('dragBottom');
                 $element.removeClass('dragRule');
                 event.stopPropagation();
             });
 
-            $element.on('dragenter',function(e){
+            $element.on('dragenter', function (e) {
                 var event = e.originalEvent || e;
-                if (!dropAllowed){
+                if (!dropAllowed) {
                     return true;
                 }
                 event.preventDefault();
             });
 
-            $element.on('dragleave',function(e){
+            $element.on('dragleave', function (e) {
                 var event = e.originalEvent || e;
                 $element.removeClass('dragTop');
                 $element.removeClass('dragBottom');
             });
 
-            $element.on('dragover',function(e){
+            $element.on('dragover', function (e) {
                 var event = e.originalEvent || e;
                 event.stopPropagation();
                 event.preventDefault();
                 if ($element[0] === dragInfo.target) {
                     return true;
                 }
-                topOrBottom(event,$element,builderController.paddingDrop);
+                topOrBottom(event, $element, builderController.paddingDrop);
                 return false;
             });
 
-            $element.on('drop',function(e){
+            $element.on('drop', function (e) {
                 var event = e.originalEvent || e;
-                if (!dropAllowed() ||$element[0] === dragInfo.target){
+                if (!dropAllowed() || $element[0] === dragInfo.target) {
                     return true;
                 }
                 event.stopPropagation();
                 event.preventDefault();
                 dragInfo.currentOverClass = '';
-                dragInfo.rule.parent.rules.some(function(item,index){
-                    if (item!=dragInfo.rule) return false;
-                    dragInfo.rule.parent.rules.splice(index,1);
+                dragInfo.rule.parent.rules.some(function (item, index) {
+                    if (item != dragInfo.rule) return false;
+                    dragInfo.rule.parent.rules.splice(index, 1);
                     return true;
                 });
-                for (var i=0;i<$scope.rule.parent.rules.length;i++){
-                    if ($scope.rule.parent.rules[i]!= $scope.rule){
+                for (var i = 0; i < $scope.rule.parent.rules.length; i++) {
+                    if ($scope.rule.parent.rules[i] != $scope.rule) {
                         continue;
                     }
-                    $scope.rule.parent.rules.splice(dragInfo.whereDrop =='previous'?i:i+1,0,dragInfo.rule);
+                    $scope.rule.parent.rules.splice(dragInfo.whereDrop == 'previous' ? i : i + 1, 0, dragInfo.rule);
                     dragInfo.rule.parent = $scope.rule.parent;
                     break;
                 }
@@ -364,7 +429,11 @@
 
     }
 
-    return {}
+    return {
+        createBuilder: function (options) {
+            return new azQueryBuilderClass(options);
+        }
+    };
 
     // $templateCache.put('template/azQueryBuilder.html',["<div class=\"query-builder\">",
     //     "<div class=\"group-rule\">",
