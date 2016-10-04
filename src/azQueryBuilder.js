@@ -40,12 +40,6 @@
             self.filtersByKey[item.name] = item;
         });
         self.operators = options.operators || azQueryBuilderClass.OPERATORS;
-        self.draggable = options.hasOwnProperty('draggable') ? options.draggable : true;
-        self.paddingDrop = options.hasOwnProperty('paddingDrop') ? options.paddingDrop : 5;
-        self.createImageDrag = options.hasOwnProperty('createImageDrag') ? options.createImageDrag : true;
-        self.onBeforeRemove = options.hasOwnProperty('onBeforeRemove') ? options.onBeforeRemove: function(){
-            return true;
-        }
     };
 
     azQueryBuilderClass.DEFAULTS = {
@@ -134,6 +128,14 @@
         function QueryBuilderController($scope) {
             var self = this;
             self.queryBuilder = new azQueryBuilderClass($scope.options);
+
+            self.draggable = $scope.options.hasOwnProperty('draggable') ? $scope.options.draggable : true;
+            self.paddingDrop = $scope.options.hasOwnProperty('paddingDrop') ? $scope.options.paddingDrop : 5;
+            self.createImageDrag = $scope.options.hasOwnProperty('createImageDrag') ? $scope.options.createImageDrag : true;
+            self.onBeforeRemove = $scope.options.hasOwnProperty('onBeforeRemove') ? $scope.options.onBeforeRemove: function(){
+                return true;
+            }
+
             $scope.rule = self.queryBuilder;
             $scope.queryBuilder = self.queryBuilder;
 
@@ -146,8 +148,8 @@
                 $scope.rule.addRule(parent);
             };
             self.removeRule = function (rule) {
-                if (angular.isFunction(self.queryBuilder.onBeforeRemove)){
-                    var result = self.queryBuilder.onBeforeRemove(rule)
+                if (angular.isFunction(self.onBeforeRemove)){
+                    var result = self.onBeforeRemove(rule)
                     if (typeof result == 'object' && result.then){
                         result.then(function(){
                             self.queryBuilder.removeRule(rule);
@@ -266,7 +268,7 @@
                 $scope.rule.condition = condition;
             };
 
-            $element[0].draggable = builderController.queryBuilder.draggable;
+            $element[0].draggable = builderController.draggable;
 
 
             $element.on('dragstart',function(e){
@@ -277,7 +279,7 @@
                 event.dataTransfer.effectAllowed = 'move';
                 event.dataTransfer.setData("Text", '');
                 $element.addClass('dragRule');
-                if (builderController.queryBuilder.createImageDrag){
+                if (builderController.createImageDrag){
                     event.dataTransfer.setDragImage($element[0],0,0)
                 }
                 event.stopPropagation();
@@ -315,7 +317,7 @@
                 if ($element[0] === dragInfo.target) {
                     return true;
                 }
-                topOrBottom(event,$element,builderController.queryBuilder.paddingDrop);
+                topOrBottom(event,$element,builderController.paddingDrop);
                 return false;
             });
 
