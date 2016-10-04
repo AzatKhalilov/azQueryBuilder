@@ -66,14 +66,12 @@
     function parseSql(rule) {
         var condition = '';
         rule.rules.some(function (item, index) {
-            var childCondition = '';
             if (item.rules && item.rules.length > 0) {
                 if (item.rules.length==1){
                     condition +=parseSql(item);
                 }else {
                     condition += "(" + parseSql(item) + ")";
                 }
-
             } else {
                 if (!valid(item)){
                     console.error('Not valid condition');
@@ -153,12 +151,19 @@
     };
 
     azQueryBuilderClass.prototype.removeRule = function (rule) {
-        rule.parent.rules.some(function (item, index) {
-            if (item == rule) {
-                rule.parent.rules.splice(index, 1);
-                return true;
-            }
-        })
+        function recursionRemove(rules){
+            rules.some(function(item,index){
+                if (item == rule) {
+                    rules.splice(index, 1);
+                    return true;
+                }
+                if (item.rules&&item.rules.length>0){
+                    return recursionRemove(item.rules);
+                }
+            })
+
+        }
+        recursionRemove(this.rule.rules);
     };
 
     azQueryBuilderClass.prototype.getConditionString = function (format) {
@@ -311,7 +316,6 @@
 
             var builderController = controller[0];
             $scope.queryBuilder = builderController.queryBuilder;
-            $scope.rules = $scope.rule.rules;
             $scope.addGroup = function () {
                 builderController.addGroup($scope.rule);
             };
