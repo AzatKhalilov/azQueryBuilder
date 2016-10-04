@@ -87,6 +87,27 @@
         return condition
     }
 
+    function findLocation(root,rule){
+        var location = null;
+        root.rules.some(function(item,index){
+            if (item == rule){
+                location ={
+                    parent:root,
+                    index:index
+                };
+                return true;
+            }
+            if (item.rules&&item.rules.length>0){
+                location = findLocation(item,rule);
+                if (location){
+                    return true;
+                }
+            }
+        });
+        return location;
+    }
+
+
     var azQueryBuilderClass = function (options) {
         self = this;
         self.defaults = azQueryBuilderClass.DEFAULTS;
@@ -137,8 +158,6 @@
 
     azQueryBuilderClass.prototype.addGroup = function (parent) {
         parent.rules.push({
-                parent: parent,
-                id: createUUID(),
                 condition: this.defaults.defaultCondition,
                 rules: [],
                 isGroup: true
@@ -147,12 +166,12 @@
     };
 
     azQueryBuilderClass.prototype.addRule = function (parent) {
-        parent.rules.push({parent: parent, id: createUUID()});
+        parent.rules.push({});
     };
 
     azQueryBuilderClass.prototype.removeRule = function (rule) {
         function recursionRemove(rules){
-            rules.some(function(item,index){
+            return rules.some(function(item,index){
                 if (item == rule) {
                     rules.splice(index, 1);
                     return true;
@@ -161,11 +180,21 @@
                     return recursionRemove(item.rules);
                 }
             })
-
         }
         recursionRemove(this.rule.rules);
     };
-
+    azQueryBuilderClass.prototype.insertBefore = function(rule,insertRule){
+        var location = findLocation(this.rule,rule);
+        if (location){
+            location.parent.rules.splice(location.index,0,insertRule);
+        }
+    };
+    azQueryBuilderClass.prototype.insertAfter = function(rule,insertRule){
+        var location = findLocation(this.rule,rule);
+        if (location){
+            location.parent.rules.splice(location.index+1,0,insertRule);
+        }
+    };
     azQueryBuilderClass.prototype.getConditionString = function (format) {
         return this.convertPlugin[format].apply(this,[this.rule]);
     };
@@ -206,8 +235,6 @@
 
             $scope.rule = self.queryBuilder.rule;
             $scope.queryBuilder = self.queryBuilder;
-
-            $scope.rules = self.queryBuilder.rule.rules;
 
             self.addGroup = function (parent) {
                 self.queryBuilder.addGroup(parent);
@@ -398,18 +425,11 @@
                 event.stopPropagation();
                 event.preventDefault();
                 dragInfo.currentOverClass = '';
-                dragInfo.rule.parent.rules.some(function (item, index) {
-                    if (item != dragInfo.rule) return false;
-                    dragInfo.rule.parent.rules.splice(index, 1);
-                    return true;
-                });
-                for (var i = 0; i < $scope.rule.parent.rules.length; i++) {
-                    if ($scope.rule.parent.rules[i] != $scope.rule) {
-                        continue;
-                    }
-                    $scope.rule.parent.rules.splice(dragInfo.whereDrop == 'previous' ? i : i + 1, 0, dragInfo.rule);
-                    dragInfo.rule.parent = $scope.rule.parent;
-                    break;
+                builderController.queryBuilder.removeRule(dragInfo.rule);
+                if (dragInfo.whereDrop == 'previous'){
+                    builderController.queryBuilder.insertBefore($scope.rule,dragInfo.rule);
+                }else {
+                    builderController.queryBuilder.insertAfter($scope.rule,dragInfo.rule);
                 }
                 $scope.$evalAsync();
                 $element.removeClass('dragTop');
