@@ -235,7 +235,7 @@
 
         function QueryBuilderController($scope) {
             var self = this;
-            self.queryBuilder = new azQueryBuilderClass($scope.options);
+            self.queryBuilder = $scope.builder;
             self.draggable = $scope.options.hasOwnProperty('draggable') ? $scope.options.draggable : true;
             self.paddingDrop = $scope.options.hasOwnProperty('paddingDrop') ? $scope.options.paddingDrop : 5;
             self.createImageDrag = $scope.options.hasOwnProperty('createImageDrag') ? $scope.options.createImageDrag : true;
@@ -244,7 +244,7 @@
             };
 
             $scope.rule = self.queryBuilder.rule;
-            $scope.queryBuilder = self.queryBuilder;
+            // $scope.queryBuilder = self.queryBuilder;
 
 
             self.addGroup = function (parent) {
@@ -281,11 +281,6 @@
             $scope.setCondition = function (condition) {
                 $scope.rule.condition = condition;
             };
-
-            $scope.getSql = function () {
-                console.log(self.queryBuilder.getConditionSQL());
-            }
-
         }
 
         function QueryBuilderLink() {
