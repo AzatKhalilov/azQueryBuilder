@@ -272,11 +272,11 @@
             };
 
             $scope.addGroup = function () {
-                self.addGroup($scope)
+                self.addGroup($scope.rule)
             };
 
             $scope.addRule = function () {
-                self.addRule($scope)
+                self.addRule($scope.rule)
             };
             $scope.setCondition = function (condition) {
                 $scope.rule.condition = condition;
