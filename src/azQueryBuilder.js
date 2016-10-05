@@ -37,6 +37,57 @@
         });
     }
 
+
+
+    function valid(rule) {
+        return rule.name && rule.operator;
+    }
+
+    function parseSql(rule, builder) {
+        var condition = '';
+        rule.rules.some(function (item, index) {
+            if (item.rules && item.rules.length > 0) {
+                if (item.rules.length == 1) {
+                    condition += parseSql(item);
+                } else {
+                    condition += "(" + parseSql(item) + ")";
+                }
+            } else {
+                if (!valid(item)) {
+                    console.error('Not valid condition');
+                    return true;
+                }
+                var value = Array.isArray(item.value) ? item.value : [item.value];
+                condition += item.name + ' ' + sqlOperators[item.operator].operator + ' ' +
+                    format(sqlOperators[item.operator].format, value);
+            }
+            if (index < rule.rules.length - 1) {
+                condition += ' ' + rule.condition + ' ';
+            }
+        });
+        return condition
+    }
+
+    function findLocation(root, rule) {
+        var location = null;
+        root.rules.some(function (item, index) {
+            if (item == rule) {
+                location = {
+                    parent: root,
+                    index: index
+                };
+                return true;
+            }
+            if (item.rules && item.rules.length > 0) {
+                location = findLocation(item, rule);
+                if (location) {
+                    return true;
+                }
+            }
+        });
+        return location;
+    }
+
     var sqlOperators = {
         equal: {operator: '=', format: "{0}"},
         not_equal: {operator: '!=', format: '{0}'},
@@ -46,9 +97,9 @@
         less_or_equal: {operator: '<=', format: '{0}'},
         greater: {operator: '>', format: '{0}'},
         greater_or_equal: {operator: '>=', format: '{0}'},
-        between: {type: 'between', label: 'between', countValues: 2},
-        not_between: {type: 'not_between', label: 'not between', countValues: 2},
-        begins_with: {type: 'begins_with', label: 'begin with'},
+        between: {operator: 'BETWEEN', format: '{0} AND {1}'},
+        not_between: {type: 'not_between', label: 'not between'},
+        begins_with: {type: 'begins_with', label: 'begin with',format: '{0}'},
         not_begins_with: {type: 'not_begins_with', label: 'not begins with'},
         contains: {type: 'contains', label: 'contains'},
         not_contains: {type: 'not_contains', label: 'not contains'},
@@ -60,61 +111,13 @@
         is_not_null: {type: 'is_not_null', label: 'is not null'}
     };
 
-    function valid(rule){
-        return rule.name&&rule.operator;
-    }
-    function parseSql(rule) {
-        var condition = '';
-        rule.rules.some(function (item, index) {
-            if (item.rules && item.rules.length > 0) {
-                if (item.rules.length==1){
-                    condition +=parseSql(item);
-                }else {
-                    condition += "(" + parseSql(item) + ")";
-                }
-            } else {
-                if (!valid(item)){
-                    console.error('Not valid condition');
-                    return true;
-                }
-                condition += item.name + ' ' + sqlOperators[item.operator].operator + ' ' +
-                    format(sqlOperators[item.operator].format, [item.value]);
-            }
-            if (index < rule.rules.length - 1) {
-                condition += ' ' + rule.condition + ' ';
-            }
-        });
-        return condition
-    }
-
-    function findLocation(root,rule){
-        var location = null;
-        root.rules.some(function(item,index){
-            if (item == rule){
-                location ={
-                    parent:root,
-                    index:index
-                };
-                return true;
-            }
-            if (item.rules&&item.rules.length>0){
-                location = findLocation(item,rule);
-                if (location){
-                    return true;
-                }
-            }
-        });
-        return location;
-    }
-
-
     var azQueryBuilderClass = function (options) {
         self = this;
         self.defaults = azQueryBuilderClass.DEFAULTS;
-        self.rule =options.rule || {
-            rules: [],
-            condition: self.defaults.defaultCondition
-        };
+        self.rule = options.rule || {
+                rules: [],
+                condition: self.defaults.defaultCondition
+            };
         self.filters = options.filters || [];
         self.filtersByKey = {};
         self.filters.forEach(function (item) {
@@ -123,6 +126,13 @@
         self.operators = options.operators || azQueryBuilderClass.OPERATORS;
         self.convertPlugin = {
             sql: parseSql
+        };
+        if (options.convertPlugin) {
+            for (var prop in options.convertPlugin) {
+                if (obj.hasOwnProperty(prop)) {
+                    self.convertPlugin[prop] = options.convertPlugin[prop];
+                }
+            }
         }
 
     };
@@ -141,7 +151,7 @@
         less_or_equal: {type: 'less_or_equal', label: '<='},
         greater: {type: 'greater', label: '>'},
         greater_or_equal: {type: 'greater_or_equal', label: '>='},
-        between: {type: 'between', label: 'between', countValues: 2},
+        between: {type: 'between', label: 'between', countValues: 2, separator: 'AND'},
         not_between: {type: 'not_between', label: 'not between', countValues: 2},
         begins_with: {type: 'begins_with', label: 'begin with'},
         not_begins_with: {type: 'not_begins_with', label: 'not begins with'},
@@ -149,10 +159,10 @@
         not_contains: {type: 'not_contains', label: 'not contains'},
         ends_with: {type: 'ends_with', label: 'ends with'},
         not_ends_with: {type: 'not_ends_with', label: 'not ends with'},
-        is_empty: {type: 'is_empty', label: 'is empty'},
-        is_not_empty: {type: 'is_not_empty', label: 'is not empty'},
-        is_null: {type: 'is_null', label: 'is null'},
-        is_not_null: {type: 'is_not_null', label: 'is not null'}
+        is_empty: {type: 'is_empty', label: 'is empty', countValues: 0},
+        is_not_empty: {type: 'is_not_empty', label: 'is not empty', countValues: 0},
+        is_null: {type: 'is_null', label: 'is null', countValues: 0},
+        is_not_null: {type: 'is_not_null', label: 'is not null', countValues: 0}
     };
 
 
@@ -170,35 +180,35 @@
     };
 
     azQueryBuilderClass.prototype.removeRule = function (rule) {
-        function recursionRemove(rules){
-            return rules.some(function(item,index){
+        function recursionRemove(rules) {
+            return rules.some(function (item, index) {
                 if (item == rule) {
                     rules.splice(index, 1);
                     return true;
                 }
-                if (item.rules&&item.rules.length>0){
+                if (item.rules && item.rules.length > 0) {
                     return recursionRemove(item.rules);
                 }
             })
         }
+
         recursionRemove(this.rule.rules);
     };
-    azQueryBuilderClass.prototype.insertBefore = function(rule,insertRule){
-        var location = findLocation(this.rule,rule);
-        if (location){
-            location.parent.rules.splice(location.index,0,insertRule);
+    azQueryBuilderClass.prototype.insertBefore = function (rule, insertRule) {
+        var location = findLocation(this.rule, rule);
+        if (location) {
+            location.parent.rules.splice(location.index, 0, insertRule);
         }
     };
-    azQueryBuilderClass.prototype.insertAfter = function(rule,insertRule){
-        var location = findLocation(this.rule,rule);
-        if (location){
-            location.parent.rules.splice(location.index+1,0,insertRule);
+    azQueryBuilderClass.prototype.insertAfter = function (rule, insertRule) {
+        var location = findLocation(this.rule, rule);
+        if (location) {
+            location.parent.rules.splice(location.index + 1, 0, insertRule);
         }
     };
     azQueryBuilderClass.prototype.getConditionString = function (format) {
-        return this.convertPlugin[format].apply(this,[this.rule]);
+        return this.convertPlugin[format].apply(this, [this.rule, this]);
     };
-
     azQueryBuilderClass.prototype.getConditionSQL = function () {
         return this.getConditionString('sql')
     };
@@ -236,6 +246,7 @@
             $scope.rule = self.queryBuilder.rule;
             $scope.queryBuilder = self.queryBuilder;
 
+
             self.addGroup = function (parent) {
                 self.queryBuilder.addGroup(parent);
             };
@@ -271,7 +282,7 @@
                 $scope.rule.condition = condition;
             };
 
-            $scope.getSql = function(){
+            $scope.getSql = function () {
                 console.log(self.queryBuilder.getConditionSQL());
             }
 
@@ -287,7 +298,8 @@
             templateUrl: getTemplate,
             scope: {
                 templateUrl: '@',
-                options: '='
+                options: '=',
+                builder: '='
             },
             controller: ['$scope', QueryBuilderController],
             link: QueryBuilderLink
@@ -341,8 +353,15 @@
                 return true
             }
 
+            function changeOperator(operator) {
+                $scope.operator = operator ? builderController.queryBuilder.operators[operator] : null;
+                $scope.inputs = $scope.operator && $scope.operator.countValues > 0 ? new Array($scope.operator.countValues) : [];
+            }
+
             var builderController = controller[0];
             $scope.queryBuilder = builderController.queryBuilder;
+
+
             $scope.addGroup = function () {
                 builderController.addGroup($scope.rule);
             };
@@ -363,6 +382,11 @@
             $scope.setCondition = function (condition) {
                 $scope.rule.condition = condition;
             };
+
+            $scope.$watch('rule.operator', function (newVal, oldVal) {
+                changeOperator(newVal);
+            });
+
 
             $element[0].draggable = builderController.draggable;
 
@@ -426,10 +450,10 @@
                 event.preventDefault();
                 dragInfo.currentOverClass = '';
                 builderController.queryBuilder.removeRule(dragInfo.rule);
-                if (dragInfo.whereDrop == 'previous'){
-                    builderController.queryBuilder.insertBefore($scope.rule,dragInfo.rule);
-                }else {
-                    builderController.queryBuilder.insertAfter($scope.rule,dragInfo.rule);
+                if (dragInfo.whereDrop == 'previous') {
+                    builderController.queryBuilder.insertBefore($scope.rule, dragInfo.rule);
+                } else {
+                    builderController.queryBuilder.insertAfter($scope.rule, dragInfo.rule);
                 }
                 $scope.$evalAsync();
                 $element.removeClass('dragTop');
@@ -459,17 +483,4 @@
         }
     };
 
-    // $templateCache.put('template/azQueryBuilder.html',["<div class=\"query-builder\">",
-    //     "<div class=\"group-rule\">",
-    //     "<div>",
-    //     "<select ng-options=\"item as item for item in queryBuilder.defaults.conditions\"",
-    //     "ng-model=\"queryBuilder.condition\">",
-    //     "</select>",
-    //     "<button ng-click=\"addGroup()\">Add group</button>",
-    //     "<button ng-click=\"addRule()\">Add rule</button>",
-    //     "</div>",
-    //     "<ul class=\"rules-list\">",
-    //     "<li class=\"rule-container\" ng-repeat=\"rule in rules track by rule.id\" ng-model=\"rule\">",
-    //     "<az-query-builder-rule ng-model=\"rule\"></az-query-builder-rule>",
-    //     "</li></ul></div></div>"].join(''));
 });
