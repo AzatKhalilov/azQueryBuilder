@@ -38,8 +38,8 @@
         </span>
         </div>
         <ul class="rules-list">
-            <li class="rule-container" ng-repeat="rule in rules track by rule.id">
-                <az-query-builder-rule ng-model="rule"></az-query-builder-rule>
+            <li class="rule-container" ng-repeat="item in rule.rules">
+                <az-query-builder-rule ng-model="item"></az-query-builder-rule>
             </li>
         </ul>
     </div>
